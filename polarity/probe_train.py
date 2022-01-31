@@ -12,7 +12,7 @@ from common.utils import *
 from data.data import build_data
 from models.gpt3 import GPT3
 from common.vocab import VocabEntry
-from probe import Probe
+from probe import MiniGPT_Probe
 matplotlib.use('Agg')
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')   
 
@@ -83,8 +83,8 @@ parser = argparse.ArgumentParser(description='')
 args = parser.parse_args()
 args.device = device
 args.mname  = 'MiniGPT' 
-model_path  = 'model/ae/results/50000_instances/30epochs.pt'
-model_vocab = 'model/ae/results/50000_instances/surf_vocab.json'
+model_path  = '/Users/emrecanacikgoz/Desktop/NLP Experiments/Experiments/exp14/charlm_miniGPT/results/50000_instances150epochs.pt'
+model_vocab = '/Users/emrecanacikgoz/Desktop/NLP Experiments/Experiments/exp14/charlm_miniGPT/results/surf_vocab.json'
 
 # training
 args.batchsize = 128; args.epochs = 100
@@ -96,9 +96,9 @@ args.seq_to_no_pad = 'surface'
 with open(model_vocab) as f:
     word2id = json.load(f)
     surf_vocab = VocabEntry(word2id)
-args.trndata = 'evaluation/probing/polarity/data/polar.uniquesurfs.trn.txt' 
-args.valdata = 'evaluation/probing/polarity/data/polar.uniquesurfs.val.txt'
-args.tstdata = 'evaluation/probing/polarity/data/polar.uniquesurfs.val.txt' 
+args.trndata = './polarity/data/polar.uniquesurfs.trn.txt' 
+args.valdata = './polarity/data/polar.uniquesurfs.val.txt'
+args.tstdata = './polarity/data/polar.uniquesurfs.val.txt' 
 args.maxtrnsize = 57769; args.maxvalsize = 10000; args.maxtstsize = 10000
 rawdata, batches, vocab = build_data(args, surf_vocab)
 _, polar_vocab  = vocab
@@ -114,22 +114,27 @@ embedding_dropout_rate=0.15
 attention_dropout_rate=0.15
 residual_dropout_rate=0.15
 expand_ratio = 4
-args.pretrained_model = GPT3(vocab=polar_vocab,
-                  num_layers=num_layers,
-                  embed_dim=embed_dim,
-                  num_heads=num_heads,
-                  block_size=block_size,
-                  embedding_dropout_rate=embedding_dropout_rate,
-                  attention_dropout_rate=attention_dropout_rate,
-                  residual_dropout_rate=residual_dropout_rate,
-                  expand_ratio=expand_ratio)
-args.model = Probe(args, polar_vocab)
-for param in args.model.encoder.parameters(): # encoder ????
+args.pretrained_model = GPT3(vocab=surf_vocab,
+                             num_layers=num_layers,
+                             embed_dim=embed_dim,
+                             num_heads=num_heads,
+                             block_size=block_size,
+                             embedding_dropout_rate=embedding_dropout_rate,
+                             attention_dropout_rate=attention_dropout_rate,
+                             residual_dropout_rate=residual_dropout_rate,
+                             expand_ratio=expand_ratio
+                            )
+args.nh = 1024
+args.embed = embed_dim
+args.model = MiniGPT_Probe(args, polar_vocab)
+for param in args.model.token_embedding.parameters():
+    param.requires_grad = False
+for param in args.model.decoders.parameters():
     param.requires_grad = False
 args.model.to(args.device)
 
 # logging
-args.modelname = 'evaluation/probing/polarity/results/'+args.mname+'/'+str(len(trndata))+'_instances/'
+args.modelname = './polarity/results/'+args.mname+'/'+str(len(trndata))+'_instances/'
 try:
     os.makedirs(args.modelname)
     print("Directory " , args.modelname ,  " Created ") 
