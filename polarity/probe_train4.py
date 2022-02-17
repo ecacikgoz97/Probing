@@ -12,7 +12,7 @@ from common.utils import *
 from data.data import build_data
 from models.gpt3 import GPT3
 from common.vocab import VocabEntry
-from probe import MiniGPT_Probe2
+from probe import MiniGPT_Probe, MiniGPT_Probe2
 matplotlib.use('Agg')
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 local_set = False
@@ -73,7 +73,7 @@ def train(data, args):
             nll, acc = test(valbatches, "val", args)
         val_loss_values.append(nll)
         val_acc_values.append(acc)
-        scheduler.step(nll)
+        #scheduler.step(nll)
         if nll < best_loss:
             args.logger.write('update best loss \n')
             best_loss = nll
@@ -87,12 +87,12 @@ def train(data, args):
 parser = argparse.ArgumentParser(description='')
 args = parser.parse_args()
 args.device = device
-args.mname  = 'MiniGPT_3_500epochs_lr001_scheduler' 
+args.mname  = 'MiniGPT_500epochs_lr001_batch32' 
 model_path  = working_path + 'NLP/EXPERIMENTS/exp14/charlm_miniGPT/results/50000_instances500epochs.pt'
 model_vocab = working_path + 'NLP/EXPERIMENTS/exp14/charlm_miniGPT/results/surf_vocab.json'
 
 # training
-args.batchsize = 128; args.epochs = 500
+args.batchsize = 32; args.epochs = 500
 args.opt= 'Adam'; args.lr = 0.001
 args.task = 'surf2polar'
 args.seq_to_no_pad = 'surface'
@@ -129,9 +129,8 @@ args.pretrained_model = GPT3(vocab=surf_vocab,
                              residual_dropout_rate=residual_dropout_rate,
                              expand_ratio=expand_ratio
                             )
-args.pretrained_model.load_state_dict(torch.load(model_path))
 args.embed = embed_dim
-args.model = MiniGPT_Probe2(args, polar_vocab)
+args.model = MiniGPT_Probe(args, polar_vocab)
 print(args.model)
 for param in args.model.token_embedding.parameters():
     param.requires_grad = False
@@ -139,7 +138,7 @@ for param in args.model.decoder1.parameters():
     param.requires_grad = False
 for param in args.model.decoder2.parameters():
     param.requires_grad = False
-for param in args.model.MH_attention3.parameters():
+for param in args.model.decoder3.parameters():
     param.requires_grad = False
 args.model.to(args.device)
 print(args.model)

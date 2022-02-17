@@ -10,17 +10,17 @@ import torch.nn as nn
 from models.gpt3 import GPT3
 from common.vocab import VocabEntry
 from common.utils import *
-from probe import MiniGPT_Probe
+from probe import MiniGPT_Probe, MiniGPT_Probe2
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')   
 
 # CONFIG
 parser = argparse.ArgumentParser(description='')
 args = parser.parse_args()
 args.device         = device
-args.mname          = 'miniGPT' 
-model_path          = '/Users/emrecanacikgoz/Desktop/NLP/Probing/polarity/results/MiniGPT/4000_instances/100epochs.pt'
-model_surf_vocab    = '/Users/emrecanacikgoz/Desktop/NLP/Probing/polarity/results/MiniGPT/4000_instances/surf_vocab.json'
-model_polar_vocab   = '/Users/emrecanacikgoz/Desktop/NLP/Probing/polarity/results/MiniGPT/4000_instances/polar_vocab.json'
+args.mname          = 'miniGPT_3' 
+model_path          = '/kuacc/users/eacikgoz17/NLP/Probing/polarity/results/MiniGPT_500epochs_lr001_batch32_scheduler/4000_instances/500epochs.pt'
+model_surf_vocab    = '/kuacc/users/eacikgoz17/NLP/Probing/polarity/results/MiniGPT_500epochs_lr001_batch32_scheduler/4000_instances/surf_vocab.json'
+model_polar_vocab   = '/kuacc/users/eacikgoz17/NLP/Probing/polarity/results/MiniGPT_500epochs_lr001_batch32_scheduler/4000_instances/polar_vocab.json'
 
 # data
 with open(model_surf_vocab) as f:
@@ -58,11 +58,11 @@ args.model.eval()
 # classify
 def classify(word):
     data = [1]+ [surf_vocab[char] for char in word] + [2]
-    x = torch.tensor(data).to('cpu').unsqueeze(0)
+    x = torch.tensor(data).to(args.device).unsqueeze(0)
     sft = nn.Softmax(dim=2)
     # (1, 1, vocab_size)
     output_logits = args.model(x)
     probs = sft(output_logits)
     pred = torch.argmax(probs,2)[0][0].item()
     print(polar_vocab.id2word(pred))
-classify('gelmedi')
+classify('gitmiyordu')
