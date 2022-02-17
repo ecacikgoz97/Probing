@@ -89,12 +89,12 @@ def train(data, args):
 parser = argparse.ArgumentParser(description='')
 args = parser.parse_args()
 args.device = device 
-args.mname  = 'MiniGPT_3_500epochs_lr001' 
+args.mname  = 'MiniGPT_3_500epochs_lr001_batch32_scheduler' 
 model_path  = working_path + 'NLP/EXPERIMENTS/exp14/charlm_miniGPT/results/50000_instances500epochs.pt'
 model_vocab = working_path + 'NLP/EXPERIMENTS/exp14/charlm_miniGPT/results/surf_vocab.json'
 
 # training
-args.batchsize = 128; args.epochs = 500
+args.batchsize = 32; args.epochs = 500
 args.opt= 'Adam'; args.lr = 0.001
 args.task = 'surf2surfpos'
 args.seq_to_no_pad = 'surface'

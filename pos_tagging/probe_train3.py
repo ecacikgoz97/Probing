@@ -41,7 +41,7 @@ def test(batches, mode, args):
 
 def train(data, args):
     trnbatches, valbatches, tstbatches = data
-    opt = optim.Adam(filter(lambda p: p.requires_grad, args.model.parameters()), lr=args.lr)
+    opt = optim.AdamW(filter(lambda p: p.requires_grad, args.model.parameters()), lr=args.lr)
     scheduler = ReduceLROnPlateau(opt, 'min', verbose=1, factor=0.5)
     for name, prm in args.model.named_parameters():
         args.logger.write('\n'+name+', '+str(prm.shape) + ': '+ str(prm.requires_grad))
@@ -89,13 +89,13 @@ def train(data, args):
 parser = argparse.ArgumentParser(description='')
 args = parser.parse_args()
 args.device = device 
-args.mname  = 'MiniGPT_3_500epochs_lr001' 
+args.mname  = 'MiniGPT_3_500epochs_lr001_batch32_scheduler_AdamW' 
 model_path  = working_path + 'NLP/EXPERIMENTS/exp14/charlm_miniGPT/results/50000_instances500epochs.pt'
 model_vocab = working_path + 'NLP/EXPERIMENTS/exp14/charlm_miniGPT/results/surf_vocab.json'
 
 # training
-args.batchsize = 128; args.epochs = 500
-args.opt= 'Adam'; args.lr = 0.001
+args.batchsize = 32; args.epochs = 500
+args.opt= 'AdamW'; args.lr = 0.001
 args.task = 'surf2surfpos'
 args.seq_to_no_pad = 'surface'
 

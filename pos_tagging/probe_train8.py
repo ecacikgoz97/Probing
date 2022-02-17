@@ -8,7 +8,7 @@ import sys, argparse, random, torch, json, matplotlib, os
 import torch.nn as nn
 import numpy as np
 import matplotlib.pyplot as plt
-from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch.optim.lr_scheduler import ReduceLROnPlateau, MultiStepLR
 from torch import optim
 from common.utils import *
 from data.data import build_data, log_data
@@ -42,7 +42,7 @@ def test(batches, mode, args):
 def train(data, args):
     trnbatches, valbatches, tstbatches = data
     opt = optim.Adam(filter(lambda p: p.requires_grad, args.model.parameters()), lr=args.lr)
-    scheduler = ReduceLROnPlateau(opt, 'min', verbose=1, factor=0.5)
+    scheduler = MultiStepLR(opt, milestones=[80,150,250,400], gamma=0.1)
     for name, prm in args.model.named_parameters():
         args.logger.write('\n'+name+', '+str(prm.shape) + ': '+ str(prm.requires_grad))
     numbatches = len(trnbatches)
@@ -75,7 +75,7 @@ def train(data, args):
             nll, acc = test(valbatches, "val", args)
         val_loss_values.append(nll)
         val_acc_values.append(acc)
-        scheduler.step(nll)
+        scheduler.step()
         if nll < best_loss:
             args.logger.write('update best loss \n')
             best_loss = nll
@@ -89,7 +89,7 @@ def train(data, args):
 parser = argparse.ArgumentParser(description='')
 args = parser.parse_args()
 args.device = device 
-args.mname  = 'MiniGPT_3_500epochs_lr001' 
+args.mname  = 'MiniGPT_500epochs_lr001' 
 model_path  = working_path + 'NLP/EXPERIMENTS/exp14/charlm_miniGPT/results/50000_instances500epochs.pt'
 model_vocab = working_path + 'NLP/EXPERIMENTS/exp14/charlm_miniGPT/results/surf_vocab.json'
 
@@ -133,7 +133,7 @@ args.pretrained_model = GPT3(vocab=surf_vocab,
                             )
 args.pretrained_model.load_state_dict(torch.load(model_path))
 args.embed = embed_dim
-args.model = MiniGPT_Probe2(args, surfpos_vocab)
+args.model = MiniGPT_Probe(args, surfpos_vocab)
 print(args.model)
 for param in args.model.token_embedding.parameters():
     param.requires_grad = False
@@ -141,7 +141,7 @@ for param in args.model.decoder1.parameters():
     param.requires_grad = False
 for param in args.model.decoder2.parameters():
     param.requires_grad = False
-for param in args.model.MH_attention3.parameters():
+for param in args.model.decoder3.parameters():
     param.requires_grad = False
 args.model.to(args.device)
 print(args.model)
